@@ -1,0 +1,31 @@
+{
+  "name": "ntag424-sun-utils",
+  "version": "0.0.1",
+  "description": "A Node.js library for verifying CMAC, decrypting SUN messages, and parsing NDEF messages on NXP's NTAG 424 DNA.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dustinwoods/ntag424-sun-utils.git"
+  },
+  "keywords": [
+    "NTAG 424 DNA",
+    "NTAG424",
+    "NXP",
+    "TagTamper",
+    "NFC",
+    "SUN",
+    "SDM",
+    "SSM",
+    "NDEF",
+    "PICCData",
+    "CMAC"
+  ],
+  "author": "Dustin Woods",
+  "license": "MIT",
+  "dependencies": {
+    "node-aes-cmac": "^0.1.1"
+  }
+}
