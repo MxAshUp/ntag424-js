@@ -228,13 +228,13 @@ module.exports.AuthenticatePart1First = function* (KeyNo, KeyValue) {
 
     const [,challenge] = processResponse(CLA_MFG, response, [STATUS_SYMB.ADDITIONAL_FRAME]);
 
-    const RdnA = crypto.randomBytes(16);
-    const RdnB = decryptAES(KeyValue, challenge);
+    const RndA = crypto.randomBytes(16);
+    const RndB = decryptAES(KeyValue, challenge);
     // Rotate the buffer left by 1 byte
-    const RdnBi = Buffer.concat([RdnB.slice(1), RdnB.slice(0, 1)]);
+    const RndBi = Buffer.concat([RndB.subarray(1), RndB.subarray(0, 1)]);
 
-    const EncryptedChallengeResponse = encryptAES(KeyValue, Buffer.concat([RdnA, RdnBi]));
-
+    const EncryptedChallengeResponse = encryptAES(KeyValue, Buffer.concat([RndA, RndBi]));
+    
     const part2CommandHeader = Buffer.from([
         CLA_MFG,
         CMDS.AuthenticatePart2,
@@ -249,7 +249,32 @@ module.exports.AuthenticatePart1First = function* (KeyNo, KeyValue) {
         SINGLE_EMPTY
     ]);
 
-    return processResponse(CLA_MFG, secondResponse);
+    const [,capabilitiesE] = processResponse(CLA_MFG, secondResponse);
+
+    const capabilities = decryptAES(KeyValue, capabilitiesE);
+    const TI = capabilities.subarray(0,4);
+    const CheckRndA = capabilities.subarray(4,20);
+    const PDcap2 = capabilities.subarray(20,26);
+    const PCDcap2 = capabilities.subarray(26,32);
+  
+    // Check that CheckRndA is a rotated version of RndA
+    const validRndA = CheckRndA.every((byte, index) => byte == RndA[(index + 1) % 16]);
+
+    // Example?
+    // TI: 'eb08a8',
+    // CheckRndA: '5707ed86f030b03bd3ce9bf3a986ed',
+    // PDcap2: '0000000000',
+    // PCDcap2: '0000000000'
+  
+    console.log({
+        validRndA,
+        capabilities: capabilities.toString('hex'),
+        TI: TI.toString('hex'),
+        CheckRndA: CheckRndA.toString('hex'),
+        PDcap2: PDcap2.toString('hex'),
+        PCDcap2: PCDcap2.toString('hex'),
+    });
+
 }
 
 module.exports.ReadData = function* (FileNo, Offset = 0, Length = 0) {
