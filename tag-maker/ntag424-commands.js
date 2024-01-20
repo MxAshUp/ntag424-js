@@ -1,4 +1,4 @@
-const { decryptAES, encryptAES } = require("./utils");
+const { decryptAES, encryptAES, calculateMAC } = require("./utils");
 const crypto = require('crypto');
 
 // Enum for other constants
@@ -140,11 +140,11 @@ const processResponse = (cla, resBuff, expectedStatuses = [STATUS_SYMB.OPERATION
         if(isUndefined(lookupCode)) {
             throw new Error(`UNKNOWN_ERROR status words: ${SW1.toString(16)} ${SW2.toString(16)}`);
         }
-        throw new Error(lookupCode.toString());
+        throw new Error(`Unexpected Word response: ${lookupCode.toString()}. Expected one of ${expectedStatuses.map(s => s.toString()).join(',')}. ${resBuff.toString('hex')}`);
     }
 
     // Return a just the data part of the buffer
-    return [lookupCode, resBuff.slice(0, resBuff.length - 2)];
+    return [lookupCode, resBuff.subarray(0, resBuff.length - 2)];
 }
 
 // module.exports.ChangeFileSettings = (options = {}) => {
@@ -190,12 +190,12 @@ const processResponse = (cla, resBuff, expectedStatuses = [STATUS_SYMB.OPERATION
 //     ])
 // }
 
-module.exports.AuthenticatePart1First = function* (KeyNo, KeyValue) {
-
-    // KeyNo must be 0-4
-
+// Note, leave MockRndA undefined, unless testing
+// KeyNo must be 0-4
+module.exports.AuthenticatePart1First = function* (KeyNo, KeyValue, MockRndA) {
 
     const pdCap = Buffer.from([
+        // This can be up to 6 bytes, but docs say to keep it at 0x00
         // 0x00,
         // 0x00,
         // 0x00,
@@ -228,7 +228,7 @@ module.exports.AuthenticatePart1First = function* (KeyNo, KeyValue) {
 
     const [,challenge] = processResponse(CLA_MFG, response, [STATUS_SYMB.ADDITIONAL_FRAME]);
 
-    const RndA = crypto.randomBytes(16);
+    const RndA = MockRndA || crypto.randomBytes(16);
     const RndB = decryptAES(KeyValue, challenge);
     // Rotate the buffer left by 1 byte
     const RndBi = Buffer.concat([RndB.subarray(1), RndB.subarray(0, 1)]);
@@ -260,21 +260,71 @@ module.exports.AuthenticatePart1First = function* (KeyNo, KeyValue) {
     // Check that CheckRndA is a rotated version of RndA
     const validRndA = CheckRndA.every((byte, index) => byte == RndA[(index + 1) % 16]);
 
-    // Example?
-    // TI: 'eb08a8',
-    // CheckRndA: '5707ed86f030b03bd3ce9bf3a986ed',
-    // PDcap2: '0000000000',
-    // PCDcap2: '0000000000'
+    if(!validRndA) {
+        throw new Error(`RndA check failed to match.`);
+    }
+
+    // SV1 Calculation
+    // A5h||5Ah||00h||01h||00h||80h||
+    // RndA[15..14]||
+    // ( RndA[13..8] ^ RndB[15..10]) ||
+    // RndB[9..0]||RndA[7..0]
+    const SV1 = Buffer.concat([
+        Buffer.from([
+            0xA5,0x5A,0x00,0x01,0x00,0x80
+        ]),
+        RndA.subarray(0,2), // RndA[15:14]
+        Buffer.from([
+            // ( RndA[13..8] ^ RndB[15..10])
+            RndA[2] ^ RndB[0],
+            RndA[3] ^ RndB[1],
+            RndA[4] ^ RndB[2],
+            RndA[5] ^ RndB[3],
+            RndA[6] ^ RndB[4],
+            RndA[7] ^ RndB[5],
+        ]),
+        RndB.subarray(6,16), // RndB[9..0]
+        RndA.subarray(8,16), // RndA[7..0]
+    ]);
+
+    // SV2 Calculation
+    // 5Ah||A5h||00h||01h||00h||80h||
+    // RndA[15..14]||
+    // ( RndA[13..8] ^ RndB[15..10]) ||
+    // RndB[9..0]||RndA[7..0]
+    const SV2 = Buffer.concat([
+        Buffer.from([
+            0x5A,0xA5,0x00,0x01,0x00,0x80
+        ]),
+        RndA.subarray(0,2), // RndA[15:14]
+        Buffer.from([
+            // ( RndA[13..8] ^ RndB[15..10])
+            RndA[2] ^ RndB[0],
+            RndA[3] ^ RndB[1],
+            RndA[4] ^ RndB[2],
+            RndA[5] ^ RndB[3],
+            RndA[6] ^ RndB[4],
+            RndA[7] ^ RndB[5],
+        ]),
+        RndB.subarray(6,16), // RndB[9..0]
+        RndA.subarray(8,16), // RndA[7..0]
+    ]);
+ 
+    // Enc Session Key = CMAC(K0, SV1)
+    const EncryptionSessionKey = calculateMAC(KeyValue, SV1);
   
-    console.log({
-        validRndA,
-        capabilities: capabilities.toString('hex'),
+    // CMAC Session Key = CMAC(K0, SV2)
+    const CMACSessionKey = calculateMAC(KeyValue, SV2);
+
+    return {
         TI: TI.toString('hex'),
-        CheckRndA: CheckRndA.toString('hex'),
         PDcap2: PDcap2.toString('hex'),
         PCDcap2: PCDcap2.toString('hex'),
-    });
-
+        SV1,
+        SV2,
+        EncryptionSessionKey,
+        CMACSessionKey,
+    };
 }
 
 module.exports.ReadData = function* (FileNo, Offset = 0, Length = 0) {
