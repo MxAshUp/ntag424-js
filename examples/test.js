@@ -1,5 +1,5 @@
 const {NFC, NFCReader, NFC_PROPERTY} = require('libnfc-js');
-const { ReadData, ISOReadBinary, ISOSelectFile, AuthenticatePart1First } = require('./ntag424-commands');
+const { ReadData, ISOReadBinary, ISOSelectFile, AuthenticatePart1First } = require('../libs/ntag424-commands');
 
 
 let nfcReader = new NFCReader();

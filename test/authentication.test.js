@@ -1,4 +1,4 @@
-const { AuthenticatePart1First } = require('../tag-maker/ntag424-commands');
+const { AuthenticatePart1First } = require('../libs/ntag424-commands');
 
 test('AuthenticatePart1First from example', () => {
     // This test is a replication of the AuthenticateEV2First example in section 6.6 of AN12196.pdf
