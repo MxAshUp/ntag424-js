@@ -24,30 +24,30 @@
 
 ## Commands to Implement
   - File Management
-    - [] ChangeFileSettings
-    - [] GetFileCounters
-    - [] GetFileSettings
+    - [ ] ChangeFileSettings
+    - [ ] GetFileCounters
+    - [ ] GetFileSettings
   - Memory and Configuration
-    - [] SetConfiguration
-    - [] GetCardUID
-    - [] ReadSig
+    - [ ] SetConfiguration
+    - [ ] GetCardUID
+    - [ ] ReadSig
   - Data Management
-    - [] ReadData
-    - [] WriteData
+    - [ ] ReadData
+    - [ ] WriteData
   - Key Management
-    - [] ChangeKey
-    - [] GetKeyVersion
+    - [ ] ChangeKey
+    - [ ] GetKeyVersion
   - Authentication
     - [x] AuthenticatePart1First
     - [x] AuthenticatePart2
-    - [] AuthenticatePart1NonFirst
-    - [] LRP
+    - [ ] AuthenticatePart1NonFirst
+    - [ ] LRP
   - ISO
     - [x] ISOReadBinary
-    - [] ISOUpdateBinary
+    - [ ] ISOUpdateBinary
     - [x] ISOSelectFile
   - Misc
-    - [] GetVersion
+    - [ ] GetVersion
 
 ## Example Usage
 
