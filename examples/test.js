@@ -1,5 +1,5 @@
 const {NFC, NFCReader, NFC_PROPERTY} = require('libnfc-js');
-const { ReadData, ISOReadBinary, ISOSelectFile, AuthenticatePart1First } = require('../libs/ntag424-commands');
+const { ISOIDs, ReadData, ISOReadBinary, ISOSelectFile, AuthenticateEV2First } = require('../libs/ntag424-commands');
 
 
 let nfcReader = new NFCReader();
@@ -52,11 +52,11 @@ nfcReader.poll(async (card) => {
 
             console.log(ndefMessage.toString());
         }
-        await doCommand(
-            ISOSelectFile(Buffer.from([0xD2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x01]), 0x04)
-        );
+
+
+        await doCommand(ISOSelectFile(ISOIDs.AppDFID, 0));
         
-        const stuff = await doCommand(AuthenticatePart1First(0, Buffer.alloc(16)));
+        const stuff = await doCommand(AuthenticateEV2First(0, Buffer.alloc(16)));
 
         console.log("PiccChallenge? ", stuff)
         

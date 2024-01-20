@@ -1,11 +1,11 @@
-const { AuthenticatePart1First } = require('../libs/ntag424-commands');
+const { AuthenticateEV2First } = require('../libs/ntag424-commands');
 
-test('AuthenticatePart1First from example', () => {
+test('AuthenticateEV2First from example', () => {
     // This test is a replication of the AuthenticateEV2First example in section 6.6 of AN12196.pdf
     const KeyNo = 0x00;
     const KeyValue = Buffer.alloc(16); //0x00000000000000000000000000000000;
     const MockRndA = Buffer.from('13C5DB8A5930439FC3DEF9A4C675360F', 'hex');
-    const commandIterator = AuthenticatePart1First(KeyNo, KeyValue, MockRndA);
+    const commandIterator = AuthenticateEV2First(KeyNo, KeyValue, MockRndA);
 
     expect(commandIterator.next().value.toString('hex').toUpperCase()).toEqual(
         // Initial command to expect back
@@ -34,12 +34,12 @@ test('AuthenticatePart1First from example', () => {
     expect(finalResult.CMACSessionKey.toString('hex').toUpperCase())        .toEqual('4C6626F5E72EA694202139295C7A7FC7');
 });
 
-test('AuthenticatePart1First snapshot', () => {
+test('AuthenticateEV2First snapshot', () => {
     // This test is a replication of the AuthenticateEV2First example in section 6.6 of AN12196.pdf
     const KeyNo = 0x00;
     const KeyValue = Buffer.alloc(16); //0x00000000000000000000000000000000;
     const MockRndA = Buffer.from('54826e57625b579adcec038dbfd3afdb', 'hex');
-    const commandIterator = AuthenticatePart1First(KeyNo, KeyValue, MockRndA);
+    const commandIterator = AuthenticateEV2First(KeyNo, KeyValue, MockRndA);
 
     expect(commandIterator.next().value.toString('hex').toUpperCase()).toEqual(
         // Initial command to expect back

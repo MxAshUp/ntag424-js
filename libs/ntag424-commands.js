@@ -69,6 +69,7 @@ const STATUS_SYMB = {
     INVALID_INSTRUCTION:    Symbol('INVALID_INSTRUCTION'),
     CLASS_NOT_SUPPORTED:    Symbol('CLASS_NOT_SUPPORTED'),
 }
+
 const SW_LOOKUP = {
     [CLA_MFG]: {
         0x9100: STATUS_SYMB.OPERATION_OK,
@@ -108,6 +109,7 @@ const SW_LOOKUP = {
 }
 
 const isUndefined = (val) => typeof val === 'undefined';
+
 const isDefined = (val) => typeof val !== 'undefined';
 
 const intBufferBE = (intValue, bufferSize) => {
@@ -198,10 +200,16 @@ const processResponse = (cla, resBuff, expectedStatuses = [STATUS_SYMB.OPERATION
 //     ])
 // }
 
-// Note, leave MockRndA undefined, unless testing
+// Note, leave MockRndA undefined, unless testing or providing different random buffer
 // KeyNo must be 0-4
-module.exports.AuthenticatePart1First = function* (KeyNo, KeyValue, MockRndA) {
+module.exports.AuthenticateEV2First = function* (KeyNo, KeyValue, MockRndA) {
+    const RndB = yield* module.exports.AuthenticateEV2FirstPart1(KeyNo, KeyValue);
+    const RndA = MockRndA || crypto.randomBytes(16);
+    return yield* module.exports.AuthenticateEV2FirstPart2(KeyValue, RndB, RndA);
+}
 
+module.exports.AuthenticateEV2FirstPart1 = function* (KeyNo, KeyValue) {
+    
     const pdCap = Buffer.from([
         // This can be up to 6 bytes, but docs say to keep it at 0x00
         // 0x00,
@@ -235,9 +243,14 @@ module.exports.AuthenticatePart1First = function* (KeyNo, KeyValue, MockRndA) {
     ]);
 
     const [,challenge] = processResponse(CLA_MFG, response, [STATUS_SYMB.ADDITIONAL_FRAME]);
-
-    const RndA = MockRndA || crypto.randomBytes(16);
+    
     const RndB = decryptAES(KeyValue, challenge);
+
+    return RndB;
+}
+
+module.exports.AuthenticateEV2FirstPart2 = function* (KeyValue, RndB, RndA) {
+
     // Rotate the buffer left by 1 byte
     const RndBi = Buffer.concat([RndB.subarray(1), RndB.subarray(0, 1)]);
 
