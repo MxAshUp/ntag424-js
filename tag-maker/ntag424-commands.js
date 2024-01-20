@@ -317,9 +317,9 @@ module.exports.AuthenticatePart1First = function* (KeyNo, KeyValue, MockRndA) {
     const CMACSessionKey = calculateMAC(KeyValue, SV2);
 
     return {
-        TI: TI.toString('hex'),
-        PDcap2: PDcap2.toString('hex'),
-        PCDcap2: PCDcap2.toString('hex'),
+        TI,
+        PDcap2,
+        PCDcap2,
         SV1,
         SV2,
         EncryptionSessionKey,
