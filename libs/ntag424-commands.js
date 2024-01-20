@@ -35,6 +35,14 @@ const CMDS = {
     ISOUpdateBinary:           0xD6,
     ISOSelectFile:             0xA4,
 };
+
+module.exports.ISOIDs = {
+    PiccMFName: Buffer.from('D2760000850101', 'hex'),
+    PiccMFID: 0x3F00,
+    AppDFName: Buffer.from('D2760000850101', 'hex'),
+    AppDFID: 0xE110,
+}
+
 const STATUS_SYMB = {
     OPERATION_OK:           Symbol('OPERATION_OK'),
     ILLEGAL_COMMAND_CODE:   Symbol('ILLEGAL_COMMAND_CODE'),
@@ -398,6 +406,13 @@ module.exports.ISOReadBinary = function* (FileNo, Offset, Length) {
     return processResponse(CLA_ISO, response);
 }
 
+// SelectionControl (SC)
+//  0 - Select by file id (MF, DF or EF)
+//  1 - Select child by file id (DF)
+//  2 - Select child by file id (EF)
+//  3 - Select parent DF
+//  4 - Select by file name (DF)
+// FileIdentifier must be an int (for 0,1,2 SC modes) or a buffer array (for SC mode 4).
 module.exports.ISOSelectFile = function* (FileIdentifier, SelectionControl, ReturnFCITemplate) {
     
     let P1 = 0;
@@ -414,7 +429,7 @@ module.exports.ISOSelectFile = function* (FileIdentifier, SelectionControl, Retu
     }
     if(SelectionControl >= 0x00 && SelectionControl <= 0x03 && isDefined(FileIdentifier)) {
         if(isDefined(FileIdentifier)) {
-            // TODO, buffer
+            // TODO - maybe allow FileIdentifier to be a buffer or an int? Currently just int allowed.
             identifier = intBufferBE(FileIdentifier, 2);
         }
     }
@@ -425,7 +440,6 @@ module.exports.ISOSelectFile = function* (FileIdentifier, SelectionControl, Retu
         if(FileIdentifier.length > 16) {
             throw new Error(`FileIdentifier cannot be > 16 bytes`);
         }
-        // Epxected to be a Buffer Array
         identifier = FileIdentifier;
     }
 
