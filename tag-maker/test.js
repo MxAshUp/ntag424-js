@@ -5,9 +5,6 @@ const { ReadData, ISOReadBinary, ISOSelectFile, AuthenticatePart1First } = requi
 let nfcReader = new NFCReader();
 nfcReader.open();
 console.log("Connected");
-// nfcReader.setProperty(NFC_PROPERTY.NP_FORCE_ISO14443_A, true);
-nfcReader.setProperty(NFC_PROPERTY.NP_FORCE_ISO14443_B, false);
-nfcReader.setProperty(NFC_PROPERTY.NP_AUTO_ISO14443_4, true);
 nfcReader.poll(async (card) => {
     try {
             
@@ -27,6 +24,8 @@ nfcReader.poll(async (card) => {
                     const response = await nfcReader.transceive(cmd);
                     console.log("Response ", response.toString('hex'));
                     result = response;
+                } else {
+                    result = cmdResult;
                 }
             }
         
@@ -57,9 +56,9 @@ nfcReader.poll(async (card) => {
             ISOSelectFile(Buffer.from([0xD2, 0x76, 0x00, 0x00, 0x85, 0x01, 0x01]), 0x04)
         );
         
-        const PiccChallenge = await doCommand(AuthenticatePart1First(0, Buffer.alloc(16)));
+        const stuff = await doCommand(AuthenticatePart1First(0, Buffer.alloc(16)));
 
-        console.log("PiccChallenge? ", PiccChallenge)
+        console.log("PiccChallenge? ", stuff)
         
     } catch (e) {
         console.log("Error caught! ", e);
