@@ -187,16 +187,6 @@ const processResponse = (cla, resBuff, expectedStatuses = [STATUS_SYMB.OPERATION
 //     return fileNo.toString(16);
 // }
 
-// module.exports.ISOReadBinary = (options = {}) => {
-//     return Buffer.from([
-//         CLA_ISO,
-//         CMDS.ISOReadBinary,
-//         P1,
-//         P2,
-
-//     ])
-// }
-
 // Note, leave MockRndA undefined, unless testing or providing different random buffer
 // KeyNo must be 0-4
 module.exports.AuthenticateEV2First = function* (KeyNo, KeyValue, MockRndA) {
