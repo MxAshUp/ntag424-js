@@ -6,8 +6,6 @@ const CLA_MFG = 0x90;
 const CLA_ISO = 0x00;
 
 // P1 and P2 (RFU - all commands use 0x00 for P1 and P2)
-const P1 = 0x00;
-const P2 = 0x00;
 const SINGLE_EMPTY = Buffer.from([0x00]);
 const CMDS = {
     // CLA = 0x90
@@ -360,8 +358,8 @@ module.exports.ReadData = function* (FileNo, Offset = 0, Length = 0) {
     const header = Buffer.from([
         CLA_MFG,
         CMDS.ReadData,
-        P1,
-        P2,
+        0x00, // P1
+        0x00, // P2
         Lc,
     ]);
 
@@ -500,8 +498,8 @@ module.exports.WriteData = (FileNo, Data, Offset = 0) => {
     const header = Buffer.from([
         CLA_MFG,
         CMDS.WriteData,
-        P1,
-        P2,
+        0x00, // P1
+        0x00, // P2
         Lc,
     ]);
 
