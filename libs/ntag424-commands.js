@@ -5,7 +5,6 @@ const crypto = require('crypto');
 const CLA_MFG = 0x90;
 const CLA_ISO = 0x00;
 
-// P1 and P2 (RFU - all commands use 0x00 for P1 and P2)
 const SINGLE_EMPTY = Buffer.from([0x00]);
 const CMDS = {
     // CLA = 0x90
