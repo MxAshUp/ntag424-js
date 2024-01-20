@@ -22,6 +22,32 @@
 - **CMAC Verification**: Verify the CMAC using a known private AES key.
 - (Future TODO) **Tag Tamper Status**: Decrypt tag tamper status.
 
+## Commands to Implement
+  - File Management
+    - [] ChangeFileSettings
+    - [] GetFileCounters
+    - [] GetFileSettings
+  - Memory and Configuration
+    - [] SetConfiguration
+    - [] GetCardUID
+    - [] ReadSig
+  - Data Management
+    - [] ReadData
+    - [] WriteData
+  - Key Management
+    - [] ChangeKey
+    - [] GetKeyVersion
+  - Authentication
+    - [x] AuthenticatePart1First
+    - [x] AuthenticatePart2
+    - [] AuthenticatePart1NonFirst
+    - [] LRP
+  - ISO
+    - [x] ISOReadBinary
+    - [] ISOUpdateBinary
+    - [x] ISOSelectFile
+  - Misc
+    - [] GetVersion
 
 ## Example Usage
 
