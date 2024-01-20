@@ -58,16 +58,19 @@ URL
 
 Plain Text
 00 11 d1 01
+02 65 6E 79 6F - yo
+02 65 6E E2 9D A4 EF B8 8F - ❤️
+02 65 6E F0 9F A5 BA - 🥺
 
 SMS
 00 26 d1 01
 // sms:5555555555?body=message test
 
 Launch app
-00 1d d40f
+00 1d d4 0f
 
 wifi
-00 54 da17
+00 54 da 17
 
 ## libnfc Notes
 libnfc config?
