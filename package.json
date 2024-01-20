@@ -4,7 +4,7 @@
   "description": "A Node.js library for communicating with NTAG424, authentication, verifying CMAC, decrypting SUN messages, parsing NDEF messages etc.",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "npx jest ./test/"
   },
   "repository": {
     "type": "git",
@@ -26,5 +26,8 @@
   "license": "MIT",
   "dependencies": {
     "node-aes-cmac": "^0.1.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0"
   }
 }
