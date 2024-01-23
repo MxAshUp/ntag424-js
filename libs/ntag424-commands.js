@@ -23,9 +23,8 @@ const CMDS = {
     ReadData:                  0xAD,
     WriteData:                 0x8D,
 
-    AuthenticatePart1First:    0x71,
-    AuthenticatePart1NonFirst: 0x77,
-    AuthenticatePart2:         0xAF,
+    AuthenticateFirst:         0x71,
+    AuthenticateNonFirst:      0x77,
 
     AdditionalFrame:           0xAF,
 
@@ -308,7 +307,7 @@ module.exports.AuthenticateEV2FirstPart1 = function* (KeyNo, KeyValue) {
 
     const header = Buffer.from([
         CLA_MFG,
-        CMDS.AuthenticatePart1First,
+        CMDS.AuthenticateFirst,
         0x00,
         0x00,
         Lc,
@@ -337,7 +336,7 @@ module.exports.AuthenticateEV2FirstPart2 = function* (KeyValue, RndB, RndA) {
     
     const part2CommandHeader = Buffer.from([
         CLA_MFG,
-        CMDS.AuthenticatePart2,
+        CMDS.AdditionalFrame,
         0x00,
         0x00,
         EncryptedChallengeResponse.length,
