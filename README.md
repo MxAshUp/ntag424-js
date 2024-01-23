@@ -26,10 +26,10 @@
   - File Management
     - [ ] ChangeFileSettings
     - [ ] GetFileCounters
-    - [ ] GetFileSettings
+    - [!] GetFileSettings
   - Memory and Configuration
     - [ ] SetConfiguration
-    - [ ] GetCardUID
+    - [!] GetCardUID
     - [ ] ReadSig
   - Data Management
     - [ ] ReadData
@@ -47,7 +47,7 @@
     - [ ] ISOUpdateBinary
     - [x] ISOSelectFile
   - Misc
-    - [ ] GetVersion
+    - [x] GetVersion
 
 ## Example Usage
 

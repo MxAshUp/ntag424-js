@@ -27,6 +27,8 @@ const CMDS = {
     AuthenticatePart1NonFirst: 0x77,
     AuthenticatePart2:         0xAF,
 
+    AdditionalFrame:           0xAF,
+
     // CLA = 0x00
     ISOReadBinary:             0xB0,
     ISOUpdateBinary:           0xD6,
@@ -152,6 +154,96 @@ const processResponse = (cla, resBuff, expectedStatuses = [STATUS_SYMB.OPERATION
 
     // Return a just the data part of the buffer
     return [lookupCode, resBuff.subarray(0, resBuff.length - 2)];
+}
+
+module.exports.GetVersion = function* () {
+    const responseA = yield Buffer.from([
+        CLA_MFG,
+        CMDS.GetVersion,
+        0x00, // P1
+        0x00, // P2
+        0x00, // Le
+    ]);
+    
+    const [,dataA] = processResponse(CLA_MFG, responseA, [STATUS_SYMB.ADDITIONAL_FRAME]);
+
+    const [
+        HWVendorID,
+        HWType,
+        HWSubType,
+        HWMajorVersion,
+        HWMinorVersion,
+        HWStorageSize,
+        HWProtocol,
+    ] = dataA;
+
+    const HWSubType50pF = (HWSubType & 0xF) === 2;
+    const HWSubTypeStrongBackMod = ((HWSubType >> 4) & 0xF) === 0;
+    const HWSubTypeStandardBackMod = ((HWSubType >> 4) & 0xF) === 8;
+
+    const responseB = yield Buffer.from([
+        CLA_MFG,
+        CMDS.AdditionalFrame,
+        0x00, // P1
+        0x00, // P2
+        0x00, // Le
+    ]);
+
+    const [,dataB] = processResponse(CLA_MFG, responseB, [STATUS_SYMB.ADDITIONAL_FRAME]);
+
+    const [
+        SWVendorID,
+        SWType,
+        SWSubType,
+        SWMajorVersion,
+        SWMinorVersion,
+        SWStorageSize,
+        SWProtocol,
+    ] = dataB;
+
+    const responseC = yield Buffer.from([
+        CLA_MFG,
+        CMDS.AdditionalFrame,
+        0x00, // P1
+        0x00, // P2
+        0x00, // Le
+    ]);
+
+    const [,dataC] = processResponse(CLA_MFG, responseC, [STATUS_SYMB.OPERATION_OK]);
+
+    const UID = dataC.subarray(0,7).toString('hex').toUpperCase();
+    const BathNo = dataC.subarray(7,11).toString('hex').toUpperCase(); // TODO - convert to int?
+    // With Week and year, it seems they are encoded as base-10 number. This isn't in the docs
+    // but as example, some tags have year 20, which makes more sense as 2020, than 2032...
+    // Tho docs do also say that week number will be 01h-52h.
+    const CalendarWeekProduction = parseInt(dataC[12].toString(16), 10);
+    const YearProduction = parseInt(dataC[13].toString(16), 10);
+    const FabKeyID = dataC?.[14];
+
+    return {
+        HWVendorID,
+        HWType,
+        HWSubType,
+        HWMajorVersion,
+        HWMinorVersion,
+        HWStorageSize,
+        HWProtocol,
+        HWSubType50pF,
+        HWSubTypeStrongBackMod,
+        HWSubTypeStandardBackMod,
+        SWVendorID,
+        SWType,
+        SWSubType,
+        SWMajorVersion,
+        SWMinorVersion,
+        SWStorageSize,
+        SWProtocol,
+        UID,
+        BathNo,
+        CalendarWeekProduction,
+        YearProduction,
+        FabKeyID,
+    };
 }
 
 // module.exports.ChangeFileSettings = (options = {}) => {
