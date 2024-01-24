@@ -245,6 +245,42 @@ module.exports.GetVersion = function* () {
     };
 }
 
+module.exports.GetFileSettings = function* (FileNo) {
+    const response = yield Buffer.from([
+        CLA_MFG,
+        CMDS.GetFileSettings,
+        0x00, // P1
+        0x00, // P2
+        0x01, // Lc
+        FileNo & 0xF, // Only bit 4-0 used for FileNo, 7-5 RFU
+        0x00, // Le
+    ]);
+
+    const [,data] = processResponse(CLA_MFG, response);
+
+    const FileType = data[0];
+
+    const FileOption = data[1];
+    // Bit 6 = SDMM Enabled.
+    const SDMMEnabled = !!(FileOption & 0b01000000);
+    // Bit 1-0 CommMode. X0b = Plain, 01b = MAX, 11b = Full
+    const CommMode = FileOption & 0b00000011;
+
+    // Eh = Free, Fh = No Access, 0-4h = app key no
+    // TODO - create access rights parser
+    const AccessRights = data.subarray(2, 4);
+    
+    // TODO convert to int
+    const FileSize = data.subarray(4, 7);
+    
+    if(SDMMEnabled) {
+        const SDMOptions = data[7];
+        const SDMAccessRights = data.subarray(8,10);
+    }
+
+    return data;
+}
+
 // module.exports.ChangeFileSettings = (options = {}) => {
 //     let {
 //         fileNo, // 5 bits long
