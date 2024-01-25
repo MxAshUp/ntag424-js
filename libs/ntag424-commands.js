@@ -156,7 +156,6 @@ const COMM_MODES = {
 }
 
 const parseCommModeBits = (val) => {
-    console.log("YO", val.toString(2));
     if((val & 0b1) === 0) {
         return COMM_MODES.PLAIN;
     }
