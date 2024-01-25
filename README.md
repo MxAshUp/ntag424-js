@@ -32,8 +32,8 @@
     - [!] GetCardUID
     - [ ] ReadSig
   - Data Management
-    - [ ] ReadData
-    - [ ] WriteData
+    - [x] ReadData
+    - [x] WriteData
   - Key Management
     - [ ] ChangeKey
     - [ ] GetKeyVersion
