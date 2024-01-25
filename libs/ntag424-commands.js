@@ -129,7 +129,6 @@ const intBufferLSB = (intValue, bufferSize) => {
 }
 
 const bufferLSBInt = (buff) => {
-    console.log(buff);
     let val = 0;
     for (let i = 0; i < buff.length; i++) {
         val += buff[i] << (i * 8);
