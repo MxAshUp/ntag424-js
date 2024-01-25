@@ -782,7 +782,7 @@ module.exports.ISOSelectFile = function* (FileIdentifier, SelectionControl, Retu
     return processResponse(CLA_ISO, response);
 }
 
-module.exports.WriteData = (FileNo, Data, Offset = 0) => {
+module.exports.WriteData = function* (FileNo, Data, Offset = 0) {
     if(Data.length > 248) {
         throw new Error(`WriteData: Data buffer size must be <= 248`);
     }
@@ -804,5 +804,7 @@ module.exports.WriteData = (FileNo, Data, Offset = 0) => {
         Lc,
     ]);
 
-    return Buffer.concat([header, data, SINGLE_EMPTY]);
+    const response = yield Buffer.concat([header, data, SINGLE_EMPTY]);
+
+    return processResponse(CLA_MFG, response);
 }
