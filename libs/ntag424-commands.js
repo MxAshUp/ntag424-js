@@ -110,7 +110,7 @@ const isUndefined = (val) => typeof val === 'undefined';
 
 const isDefined = (val) => typeof val !== 'undefined';
 
-const intBufferBE = (intValue, bufferSize) => {
+const intBufferMSB = (intValue, bufferSize) => {
     const buffer = Buffer.alloc(bufferSize);
     for (let i = 0; i < bufferSize; i++) {
         // Extract each byte from the integer and assign it to the buffer
@@ -119,7 +119,7 @@ const intBufferBE = (intValue, bufferSize) => {
     return buffer;
 }
 
-const intBufferLE = (intValue, bufferSize) => {
+const intBufferLSB = (intValue, bufferSize) => {
     const buffer = Buffer.alloc(bufferSize);
     for (let i = 0; i < bufferSize; i++) {
         // Extract each byte from the integer and assign it to the buffer in little-endian order
@@ -127,6 +127,132 @@ const intBufferLE = (intValue, bufferSize) => {
     }
     return buffer;
 }
+
+const bufferLSBInt = (buff) => {
+    console.log(buff);
+    let val = 0;
+    for (let i = 0; i < buff.length; i++) {
+        val += buff[i] << (i * 8);
+    }
+    return val;
+}
+
+const bufferMSBInt = (buff) => {
+    let val = 0;
+    for (let i = 0; i < buff.length; i++) {
+        val += buff[i] << ((buff.length - i) * 8);
+    }
+    return val;
+}
+
+// CommMode.PlainX0bNo protection: message is transmitted in plain
+// text
+// CommMode.MAC01bMAC protection for integrity and authenticity
+// CommMode.Full11bFull protection for integrity, authenticity
+// and confidentiality, a
+const COMM_MODES = {
+    PLAIN: Symbol('PLAIN'),
+    MAC: Symbol('MAC'),
+    FULL: Symbol('FULL'),
+}
+
+const parseCommModeBits = (val) => {
+    console.log("YO", val.toString(2));
+    if((val & 0b1) === 0) {
+        return COMM_MODES.PLAIN;
+    }
+    if(val & 0b01) {
+        return COMM_MODES.MAC;
+    }
+    if(val & 0b11) {
+        return COMM_MODES.FULL;
+    }
+}
+
+const ACCESS_SYMB = {
+    // File access
+    NO_ACCESS: Symbol('NO_ACCESS'),
+    FREE_ACCESS: Symbol('FREE_ACCESS'),
+    KEY_0: Symbol('KEY_0'),
+    KEY_1: Symbol('KEY_1'),
+    KEY_2: Symbol('KEY_2'),
+    KEY_3: Symbol('KEY_3'),
+    KEY_4: Symbol('KEY_4'),
+    RFU: Symbol('RFU'),
+    // SDMMetaRead
+    PLAIN_MIRRORING: Symbol('PLAIN_MIRRORING'),
+    NO_MIRRORING: Symbol('NO_MIRRORING'),
+    // SDMFileRead
+    NO_SDM: Symbol('NO_SDM'),
+};
+
+const isAccessKey = (sym) => [
+    ACCESS_SYMB.KEY_0, ACCESS_SYMB.KEY_1, ACCESS_SYMB.KEY_2, ACCESS_SYMB.KEY_3, ACCESS_SYMB.KEY_4
+].includes(sym);
+
+const ACCESS_SDMMETAREAD_MAP = {
+    0xF: ACCESS_SYMB.NO_MIRRORING,
+    0xE: ACCESS_SYMB.PLAIN_MIRRORING,
+    0x0: ACCESS_SYMB.KEY_0,
+    0x1: ACCESS_SYMB.KEY_1,
+    0x2: ACCESS_SYMB.KEY_2,
+    0x3: ACCESS_SYMB.KEY_3,
+    0x4: ACCESS_SYMB.KEY_4,
+}
+
+const ACCESS_SDMFILEREAD_MAP = {
+    0xF: ACCESS_SYMB.NO_SDM,
+    0xE: ACCESS_SYMB.RFU,
+    0x0: ACCESS_SYMB.KEY_0,
+    0x1: ACCESS_SYMB.KEY_1,
+    0x2: ACCESS_SYMB.KEY_2,
+    0x3: ACCESS_SYMB.KEY_3,
+    0x4: ACCESS_SYMB.KEY_4,    
+}
+
+const ACCESS_COND = {
+    READ: Symbol('READ'),
+    WRITE: Symbol('WRITE'),
+    READWRITE: Symbol('READWRITE'),
+    CHANGE: Symbol('CHANGE'),
+    SDMMETA_READ: Symbol('SDMMETA_READ'),
+    SDMFILE_READ: Symbol('SDMFILE_READ'),
+    SDM_CTRRET: Symbol('SDM_CTRRET'),
+    RFU: Symbol('RFU'),
+};
+
+const ACCESS_SYMB_MAP = {
+    0xF: ACCESS_SYMB.NO_ACCESS,
+    0xE: ACCESS_SYMB.FREE_ACCESS,
+    0x0: ACCESS_SYMB.KEY_0,
+    0x1: ACCESS_SYMB.KEY_1,
+    0x2: ACCESS_SYMB.KEY_2,
+    0x3: ACCESS_SYMB.KEY_3,
+    0x4: ACCESS_SYMB.KEY_4,
+};
+
+const parseAccessRights = (buff) => ({
+    [ACCESS_COND.READ]:      ACCESS_SYMB_MAP[buff[1] >> 4],
+    [ACCESS_COND.WRITE]:     ACCESS_SYMB_MAP[buff[1] & 0xF],
+    [ACCESS_COND.READWRITE]: ACCESS_SYMB_MAP[buff[0] >> 4],
+    [ACCESS_COND.CHANGE]:    ACCESS_SYMB_MAP[buff[0] & 0xF],
+});
+
+const parseSDMAccessRights = (buff) => ({
+    [ACCESS_COND.RFU]: (buff[0] >> 4) == 0xF ? ACCESS_SYMB.RFU : undefined,
+    [ACCESS_COND.SDM_CTRRET]: ACCESS_SYMB_MAP[buff[0] & 0xF],
+    [ACCESS_COND.SDMFILE_READ]: ACCESS_SDMMETAREAD_MAP[buff[1] >> 4],
+    [ACCESS_COND.SDMMETA_READ]: ACCESS_SDMFILEREAD_MAP[buff[1] & 0xF],
+});
+
+const parseSDMOptions = (fileOptionByte) => ({
+    UID:             !!(fileOptionByte & 0b10000000 ), // Bit 7
+    SDMReadCtr:      !!(fileOptionByte & 0b01000000 ), // Bit 6
+    SDMReadCtrLimit: !!(fileOptionByte & 0b00100000 ), // Bit 5
+    SDMENCFileData:  !!(fileOptionByte & 0b00010000 ), // Bit 4
+    // Bit 3-1 RFU
+    EncodingMode: (fileOptionByte & 0b1) ? 'ASCII' : undefined, // Bit 0
+});
 
 const processResponse = (cla, resBuff, expectedStatuses = [STATUS_SYMB.OPERATION_OK]) => {
     // Then proceed to process response
@@ -264,21 +390,82 @@ module.exports.GetFileSettings = function* (FileNo) {
     // Bit 6 = SDMM Enabled.
     const SDMMEnabled = !!(FileOption & 0b01000000);
     // Bit 1-0 CommMode. X0b = Plain, 01b = MAX, 11b = Full
-    const CommMode = FileOption & 0b00000011;
+    const CommMode = parseCommModeBits(FileOption & 0b00000011);
 
-    // Eh = Free, Fh = No Access, 0-4h = app key no
-    // TODO - create access rights parser
-    const AccessRights = data.subarray(2, 4);
+    const AccessRights = parseAccessRights(data.subarray(2, 4));
+
+    const FileSize = (data[4] << 16) + (data[5] << 8) + data[6];
     
-    // TODO convert to int
-    const FileSize = data.subarray(4, 7);
-    
+    let SDM = {};
     if(SDMMEnabled) {
-        const SDMOptions = data[7];
-        const SDMAccessRights = data.subarray(8,10);
+        SDM.SDMOptions = parseSDMOptions(data[7]);
+        SDM.SDMAccessRights = parseSDMAccessRights(data.subarray(8,10));
+
+        // Start on byte, and increment
+        let byteOffset = 10;
+        const getNextNBytesAsLSBInt = (n) => {
+            const val = bufferLSBInt(data.subarray(byteOffset, byteOffset + n));
+            byteOffset += n;
+            return val;
+        }
+
+        if(SDM.SDMAccessRights[ACCESS_COND.SDMMETA_READ] === ACCESS_SYMB.PLAIN_MIRRORING) {
+            if(SDM.SDMOptions.UID) {
+                // TODO - convert to int
+                SDM.SDMUIDOffset = getNextNBytesAsLSBInt(3);
+            }
+            if(SDM.SDMOptions.SDMReadCtr) {
+                // SDMReadCtr Offset 3430000 (n/a by default) 67d
+                SDM.SDMReadCtrOffset = getNextNBytesAsLSBInt(3);
+            }
+        }
+
+        if(isAccessKey(SDM.SDMAccessRights[ACCESS_COND.SDMMETA_READ])) {
+            // PICCDataOffset 3
+            SDM.SDMPICCDataOffset = getNextNBytesAsLSBInt(3);
+        }
+        
+        if(SDM.SDMAccessRights[ACCESS_COND.SDMFILE_READ] !== ACCESS_SYMB.NO_SDM) {
+            // SDMMACInputOffset 3
+            SDM.SDMMACInputOffset = getNextNBytesAsLSBInt(3);
+
+            if(SDM.SDMOptions.SDMENCFileData) {
+                // SDMENCOffset 3
+                SDM.SDMENCOffset = getNextNBytesAsLSBInt(3);
+
+                // SDMENCLength 3
+                SDM.SDMENCLength = getNextNBytesAsLSBInt(3);
+
+                // == (SDMENCOffset + SDMENCLength) .. (FileSize- 16)
+                // SDMMACOffset 3
+                SDM.SDMMACOffset = getNextNBytesAsLSBInt(3);
+            } else {
+                // == SDMMACInputOffset .. (FileSize - 16)
+                // SDMMACOffset 3
+                SDM.SDMMACOffset = getNextNBytesAsLSBInt(3);
+            }
+            
+        }
+
+        if(SDM.SDMOptions.SDMReadCtrLimit) {
+            // SDMReadCtrLimit 3
+            SDM.SDMReadCtrLimit = getNextNBytesAsLSBInt(3);
+        }
+        
+        // Check if byteoffset looks good
+        if(byteOffset - 3 !== data.length - 1) {
+            // throw new Error(`Unexpected response length given conditions. Expected by ${byteOffset - 2}, but received ${data.length}`);
+        }
     }
 
-    return data;
+    return {
+        FileType,
+        SDMMEnabled,
+        CommMode,
+        AccessRights,
+        FileSize,
+        ...SDM,
+    };
 }
 
 // module.exports.ChangeFileSettings = (options = {}) => {
@@ -464,9 +651,9 @@ module.exports.AuthenticateEV2FirstPart2 = function* (KeyValue, RndB, RndA) {
 
 module.exports.ReadData = function* (FileNo, Offset = 0, Length = 0) {
     const data = Buffer.concat([
-        intBufferLE(FileNo, 1),
-        intBufferLE(Offset, 3),
-        intBufferLE(Length, 3),
+        intBufferLSB(FileNo, 1),
+        intBufferLSB(Offset, 3),
+        intBufferLSB(Length, 3),
     ]);
 
     const Lc = data.length & 0xFF;
@@ -557,7 +744,7 @@ module.exports.ISOSelectFile = function* (FileIdentifier, SelectionControl, Retu
     if(SelectionControl >= 0x00 && SelectionControl <= 0x03 && isDefined(FileIdentifier)) {
         if(isDefined(FileIdentifier)) {
             // TODO - maybe allow FileIdentifier to be a buffer or an int? Currently just int allowed.
-            identifier = intBufferBE(FileIdentifier, 2);
+            identifier = intBufferMSB(FileIdentifier, 2);
         }
     }
     if(SelectionControl == 0x04) {
@@ -603,9 +790,9 @@ module.exports.WriteData = (FileNo, Data, Offset = 0) => {
     }
 
     const data = Buffer.concat([
-        intBufferLE(FileNo, 1),
-        intBufferLE(Offset, 3),
-        intBufferLE(Data.length, 3),
+        intBufferLSB(FileNo, 1),
+        intBufferLSB(Offset, 3),
+        intBufferLSB(Data.length, 3),
         Data,
     ]);
 
