@@ -26,7 +26,7 @@
   - File Management
     - [ ] ChangeFileSettings
     - [ ] GetFileCounters
-    - [!] GetFileSettings
+    - [x] GetFileSettings
   - Memory and Configuration
     - [ ] SetConfiguration
     - [!] GetCardUID

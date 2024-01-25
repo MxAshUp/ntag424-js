@@ -149,7 +149,7 @@ const bufferMSBInt = (buff) => {
 // CommMode.MAC01bMAC protection for integrity and authenticity
 // CommMode.Full11bFull protection for integrity, authenticity
 // and confidentiality, a
-const COMM_MODES = {
+const COMM_MODES = module.exports.COMM_MODES = {
     PLAIN: Symbol('PLAIN'),
     MAC: Symbol('MAC'),
     FULL: Symbol('FULL'),
@@ -167,7 +167,7 @@ const parseCommModeBits = (val) => {
     }
 }
 
-const ACCESS_SYMB = {
+const ACCESS_SYMB = module.exports.ACCESS_SYMB = {
     // File access
     NO_ACCESS: Symbol('NO_ACCESS'),
     FREE_ACCESS: Symbol('FREE_ACCESS'),
@@ -208,7 +208,7 @@ const ACCESS_SDMFILEREAD_MAP = {
     0x4: ACCESS_SYMB.KEY_4,    
 }
 
-const ACCESS_COND = {
+const ACCESS_COND = module.exports.ACCESS_COND = {
     READ: Symbol('READ'),
     WRITE: Symbol('WRITE'),
     READWRITE: Symbol('READWRITE'),
